@@ -64,7 +64,7 @@ class GroupComparisonTest(unittest.TestCase):
         ):
             self.assertIn(column, result.summary)
         self.assertTrue(
-            result.summary.filter(like="p_value").map(lambda value: 0 <= value <= 1).all().all()
+            result.summary.filter(like="p_value").apply(lambda column: column.map(lambda value: 0 <= value <= 1)).all().all()
         )
 
         metric_rows = result.summary.loc[["cosine", "jaccard"]]
@@ -214,10 +214,10 @@ class GroupComparisonTest(unittest.TestCase):
         self.assertEqual(result.between_groups.shape[0], 3)
         self.assertEqual(result.pairwise_overview.shape[0], 3)
         self.assertTrue(
-            result.global_test.filter(like="p_value").map(lambda value: 0 <= value <= 1).all().all()
+            result.global_test.filter(like="p_value").apply(lambda column: column.map(lambda value: 0 <= value <= 1)).all().all()
         )
         self.assertTrue(
-            result.pairwise.filter(like="p_value").map(lambda value: 0 <= value <= 1).all().all()
+            result.pairwise.filter(like="p_value").apply(lambda column: column.map(lambda value: 0 <= value <= 1)).all().all()
         )
 
     def test_two_group_mapping_reduces_to_the_binary_statistics(self):

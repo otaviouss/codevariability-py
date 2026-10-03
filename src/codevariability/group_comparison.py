@@ -115,7 +115,7 @@ def _permutation_p_values(
 
 
 def _holm(values: Mapping[str, float]) -> dict[str, float]:
-    ordered = sorted(values, key=values.get)
+    ordered = sorted(values, key=lambda name: values[name])
     adjusted: dict[str, float] = {}
     previous = 0.0
     total = len(ordered)
@@ -254,19 +254,21 @@ def _independent_files(datasets: Mapping[str, CodeDataset]) -> None:
 
 def _run_adapter(command: list[str], report, timeout: float) -> None:
     """Drain bounded stderr in a reader while the main thread enforces timeout."""
-    lines = deque(maxlen=64)
+    lines: deque[str] = deque(maxlen=64)
     reader_errors: list[BaseException] = []
     try:
         process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
                                    text=True, encoding="utf-8", errors="replace", start_new_session=os.name == "posix")
     except OSError as exc:
         raise AnalysisError(f"Não foi possível executar o adaptador AST JavaScript: {exc}.") from exc
+    assert process.stderr is not None
+    stderr = process.stderr
 
     def read_stderr():
         try:
             while True:
                 # Bound a single line as well as the tail buffer.
-                line = process.stderr.readline(4096)
+                line = stderr.readline(4096)
                 if not line:
                     break
                 message = line.strip()
@@ -298,7 +300,7 @@ def _run_adapter(command: list[str], report, timeout: float) -> None:
             process.kill()
         process.wait()
         reader.join(timeout=1)
-        process.stderr.close()
+        stderr.close()
 
 
 def _javascript_ast_matrix(
@@ -354,6 +356,37 @@ def _javascript_ast_matrix(
         return metric, matrix
 
 
+def _metadata_alpha(metadata: Mapping[str, object]) -> float:
+    value = metadata.get("alpha", 0.05)
+    if not isinstance(value, (int, float, str)):
+        raise AnalysisError("metadata.alpha deve ser um número.")
+    try:
+        return float(value)
+    except ValueError as exc:
+        raise AnalysisError("metadata.alpha deve ser um número.") from exc
+
+
+def _within_columns(names: tuple[str, str], reserved: set[str]) -> tuple[str, str]:
+    """Allocate presentation labels without mixing them with statistic keys."""
+    requested = [f"within_{name}" for name in names]
+    used = set(reserved)
+    columns = []
+    for candidate in requested:
+        column = candidate
+        while column in used or (column != candidate and column in requested):
+            column += "__group"
+        columns.append(column)
+        used.add(column)
+    return columns[0], columns[1]
+
+
+def _check_adapter_snapshot(analysis: AnalysisResult, matrix: pd.DataFrame) -> None:
+    """Require the external metric to describe the same bytes as base metrics."""
+    adapter = matrix.attrs.get("adapter_metadata", {})
+    if not isinstance(adapter, Mapping) or adapter.get("input_sha256") != analysis.metadata.get("input_sha256"):
+        raise AnalysisError("Os arquivos mudaram entre as etapas da análise ou o adaptador não confirmou os hashes de entrada.")
+
+
 @dataclass
 class GroupComparisonResult:
     """Results of an independent two-group comparison."""
@@ -365,9 +398,19 @@ class GroupComparisonResult:
     metadata: dict[str, object]
 
     @property
+    def within_group_columns(self) -> tuple[str, str]:
+        """Columns for the two named groups, separate from statistic columns."""
+        columns = self.metadata.get("within_group_columns")
+        if isinstance(columns, (list, tuple)) and len(columns) == 2 and all(isinstance(item, str) for item in columns):
+            return columns[0], columns[1]
+        left, right = self.group_names
+        return f"within_{left}", f"within_{right}"
+
+    @property
     def overview(self) -> pd.DataFrame:
         """Compact user-facing view; technical metric rows stay in ``summary``."""
         left, right = self.group_names
+        left_column, right_column = self.within_group_columns
         relevant = self.summary[self.summary["kind"].isin(["dimension", "overall"])]
         labels = {
             "dimension:textual": "Textual",
@@ -376,13 +419,13 @@ class GroupComparisonResult:
             "overall": "Geral",
         }
         rows = []
-        alpha = float(self.metadata.get("alpha", 0.05))
+        alpha = _metadata_alpha(self.metadata)
         for measure, row in relevant.iterrows():
             difference = float(row["within_difference"])
             rows.append({
                 "analysis": labels.get(measure, measure),
-                f"within_{left}": row[f"within_{left}"],
-                f"within_{right}": row[f"within_{right}"],
+                left_column: row[left_column],
+                right_column: row[right_column],
                 "between_groups": row["between_groups"],
                 "more_homogeneous": left if difference > 0 else right if difference < 0 else "tie",
                 "homogeneity_p_holm": row["p_value_homogeneity_holm"],
@@ -399,7 +442,7 @@ class GroupComparisonResult:
         """Plain-language interpretation of the overall row."""
         left, right = self.group_names
         row = self.summary.loc["overall"]
-        alpha = float(self.metadata.get("alpha", 0.05))
+        alpha = _metadata_alpha(self.metadata)
         difference = float(row["within_difference"])
         if difference == 0:
             homogeneity = f"{left} e {right} tiveram a mesma similaridade interna média"
@@ -438,8 +481,7 @@ class GroupComparisonResult:
 
     @property
     def within_groups(self) -> pd.DataFrame:
-        left, right = self.group_names
-        return self.summary[[f"within_{left}", f"within_{right}", "within_difference"]].copy()
+        return self.summary[[*self.within_group_columns, "within_difference"]].copy()
 
     @property
     def between_groups(self) -> pd.Series:
@@ -507,7 +549,7 @@ class MultiGroupComparisonResult:
             "dimension:structural_ast": "Estrutural (AST TED)",
             "overall": "Geral",
         }
-        alpha = float(self.metadata.get("alpha", 0.05))
+        alpha = _metadata_alpha(self.metadata)
         rows = []
         for measure, row in relevant.iterrows():
             rows.append({
@@ -525,7 +567,7 @@ class MultiGroupComparisonResult:
     @property
     def pairwise_overview(self) -> pd.DataFrame:
         overall = self.pairwise.xs("overall", level="measure").reset_index()
-        alpha = float(self.metadata.get("alpha", 0.05))
+        alpha = _metadata_alpha(self.metadata)
         overall["pair"] = overall["group_a"] + " × " + overall["group_b"]
         overall["more_homogeneous"] = overall.apply(
             lambda row: row["group_a"] if row["within_difference"] > 0
@@ -548,7 +590,7 @@ class MultiGroupComparisonResult:
     @property
     def interpretation(self) -> str:
         row = self.global_test.loc["overall"]
-        alpha = float(self.metadata.get("alpha", 0.05))
+        alpha = _metadata_alpha(self.metadata)
         homogeneity = (
             "Há evidência de que ao menos um grupo possui homogeneidade diferente"
             if row["p_value_homogeneity_holm"] < alpha
@@ -662,6 +704,7 @@ def _compare_multiple_groups(
             pairs = len(combined) * (len(combined) - 1) // 2
             report(f"Calculando AST TED JavaScript: {pairs} pares únicos...")
         metric, matrix = _javascript_ast_matrix(combined, report, cache_dir, ast_timeout, max_ted_cells)
+        _check_adapter_snapshot(analysis, matrix)
         javascript_ast_cache = matrix.attrs.get("adapter_metadata", {}).get("cache")
         analysis = analysis.with_metric(metric, matrix)
         javascript_ast_added = True
@@ -856,6 +899,7 @@ def compare_groups(
             pairs = len(combined) * (len(combined) - 1) // 2
             report(f"Calculando AST TED JavaScript: {pairs} pares únicos...")
         metric, matrix = _javascript_ast_matrix(combined, report, cache_dir, ast_timeout, max_ted_cells)
+        _check_adapter_snapshot(analysis, matrix)
         javascript_ast_cache = matrix.attrs.get("adapter_metadata", {}).get("cache")
         analysis = analysis.with_metric(metric, matrix)
         javascript_ast_added = True
@@ -886,8 +930,8 @@ def compare_groups(
         )
         rows[measure] = {
             "kind": kind,
-            f"within_{group_names[0]}": within_left,
-            f"within_{group_names[1]}": within_right,
+            "within_group_a": within_left,
+            "within_group_b": within_right,
             "between_groups": between,
             "within_difference": difference,
             "separation": separation,
@@ -896,6 +940,9 @@ def compare_groups(
             "p_value_separation": p_separation,
         }
     summary = pd.DataFrame.from_dict(rows, orient="index")
+    names = (group_names[0], group_names[1])
+    within_columns = _within_columns(names, set(summary.columns) - {"within_group_a", "within_group_b"})
+    summary = summary.rename(columns=dict(zip(("within_group_a", "within_group_b"), within_columns, strict=True)))
     summary.index.name = "measure"
     for source, target in (
         ("p_value_homogeneity", "p_value_homogeneity_holm"),
@@ -906,11 +953,12 @@ def compare_groups(
 
     result = GroupComparisonResult(
         summary=summary,
-        group_names=tuple(group_names),
+        group_names=names,
         files=public_files,
         metrics=analysis.metrics,
         metadata={
             **deepcopy(analysis.metadata),
+            "within_group_columns": list(within_columns),
             "ast_timeout": ast_timeout,
             "method": "file_label_permutation_v1",
             "alternative": "two-sided",

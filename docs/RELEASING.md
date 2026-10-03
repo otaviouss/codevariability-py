@@ -10,7 +10,8 @@ there is no new published release history implied by that baseline.
 1. Update `src/codevariability/__init__.py`; setuptools reads that version
    without a second version field. Update CHANGELOG and the public checklist.
 2. Start from a clean checkout and a new virtual environment. Install `.[dev]`,
-   run Ruff, pytest, and all scripts under `examples/` after installation.
+   upgrade pip and setuptools (>=83.0.0), run Ruff, mypy, pytest, and all scripts
+   under `examples/` after installation.
 3. Run `python -m build` and `python -m twine check --strict dist/*`.
 4. Inspect every wheel/sdist member. A wheel contains only `codevariability`
    and distribution metadata/license; the sdist also contains the reviewed
@@ -35,3 +36,9 @@ the two indexes. Publication is a maintainer action; CI performs checks only.
 The Python and JavaScript projects have separate release schedules. Changing
 one project's release version need not change the other, but interchange
 schema, metric IDs, and preprocessing versions must remain explicit.
+
+Before releasing this candidate, run Ruff and `mypy` as well as the original,
+adversarial, and regression tests on Python 3.10 and 3.12. Test both wheel and
+sdist installations, current dependency resolution, and supported runtime
+minimums. Build isolation must honor setuptools >=83.0.0. The dev extra adds
+Hypothesis and mypy; neither is required by runtime consumers.

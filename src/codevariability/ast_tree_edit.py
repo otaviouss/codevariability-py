@@ -162,11 +162,7 @@ def normalize_python_source(
             raise AnalysisError(
                 f"{filename}: a fonte excede os limites do parser Python ou é inválida: {exc}."
             ) from exc
-        if (
-            filename != "<unknown>"
-            and Path(filename).suffix.lower() in {".md", ".markdown"}
-            and not parsed.body
-        ):
+        if not parsed.body:
             continue
         normalized = normalize_ast(parsed)
         assert normalized is not None
@@ -202,8 +198,9 @@ def _trees_equal(left: NormalizedAstNode, right: NormalizedAstNode) -> bool:
 
 def _postorder(
     tree: NormalizedAstNode,
-) -> tuple[list[NormalizedAstNode | None], list[int], list[int]]:
-    nodes: list[NormalizedAstNode | None] = [None]
+) -> tuple[list[NormalizedAstNode], list[int], list[int]]:
+    # Index zero is unused by the one-based algorithm; its placeholder is typed.
+    nodes: list[NormalizedAstNode] = [tree]
     leftmost = [0]
     completed: list[tuple[int, int]] = []
     stack: list[tuple[NormalizedAstNode, bool]] = [(tree, False)]
@@ -280,7 +277,7 @@ def tree_edit_distance(
                     ):
                         replacement = forest[(row - 1) * columns + column - 1] + (
                             left_nodes[left_index].label
-                            != right_nodes[right_index].label  # type: ignore[union-attr]
+                            != right_nodes[right_index].label
                         )
                         value = min(deletion, insertion, replacement)
                         tree_distances[left_index * (right_count + 1) + right_index] = (
@@ -334,9 +331,12 @@ def ast_tree_edit_similarity(
     """Calculate the public ``ast_tree_edit_similarity`` pairwise matrix."""
 
     names = list(sources)
-    trees = {
+    normalized = {
         name: normalize_python_source(source, name) for name, source in sources.items()
     }
+    # A synthetic container with no fragments is an empty program, not a
+    # syntax node that should contribute positive overlap with real code.
+    trees = {name: tree if tree.children else None for name, tree in normalized.items()}
     matrix = pd.DataFrame(0.0, index=names, columns=names, dtype=float)
     for name in names:
         matrix.loc[name, name] = 1.0

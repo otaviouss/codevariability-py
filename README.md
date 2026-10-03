@@ -117,3 +117,18 @@ integration also supports `ast_timeout=120` seconds. See the
 See [CONTRIBUTING.md](https://github.com/otaviouss/codevariability-py/blob/main/CONTRIBUTING.md) for development and
 [PUBLICATION_CHECKLIST.md](https://github.com/otaviouss/codevariability-py/blob/main/PUBLICATION_CHECKLIST.md) for release preparation.
 The project uses the [MIT license](https://github.com/otaviouss/codevariability-py/blob/main/LICENSE), copyright 2026 Otávio Gomes.
+
+## Candidate compatibility
+
+Version 0.2.0 is still unreleased. Arbitrary distinct nonempty group names are
+accepted; use `result.within_group_columns` to locate collision-safe within-group
+means. Keep files unchanged while an analysis runs; optional JavaScript results
+with different input hashes raise `AnalysisError`.
+
+Runtime minimums are scikit-learn 1.5.0 and Pygments 2.20.0; build minimum is
+setuptools 83.0.0 and development tests require pytest 9.0.3. These scopes are
+separate. See [API](docs/API.md) and [metric limits](docs/METRICS.md).
+
+Python AST normalization now uses v3 to identify corrected empty-program
+behavior. The TED formula ID remains v2; use compatible normalization IDs when
+comparing results across versions.

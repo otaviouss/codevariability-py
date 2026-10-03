@@ -10,7 +10,7 @@ unchecked items are required before the first public release.
 - [x] Metadata, distribution name, import name, and single-source version checked.
 - [x] Dependencies resolved and checked for known vulnerabilities.
 - [x] Independent Python tests and lint passed.
-- [x] Python CI passed in the new repository.
+- [ ] Run repository CI on the final remediated commit (local runtime matrix is validated separately).
 - [x] Clean wheel and sdist builds completed.
 - [x] Every wheel and sdist member inspected.
 - [x] Wheel installed in a fresh environment; import and CLI checked.

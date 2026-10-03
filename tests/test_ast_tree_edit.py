@@ -238,7 +238,7 @@ class Renamed:
             (root / "right.py").write_text("other = x + y", encoding="utf-8")
             result = analyze(root, metrics=AST_TREE_EDIT_METRIC)
             self.assertEqual(result.matrices[AST_TREE_EDIT_METRIC].iloc[0, 1], 1.0)
-            self.assertEqual(result.metadata["metric_normalizations"][AST_TREE_EDIT_METRIC], "python_normalized_ast_tree_v2")
+            self.assertEqual(result.metadata["metric_normalizations"][AST_TREE_EDIT_METRIC], "python_normalized_ast_tree_v3")
             (root / "invalid.py").write_text("def invalid(:", encoding="utf-8")
             with self.assertRaises(AnalysisError):
                 analyze(root, metrics=AST_TREE_EDIT_METRIC)

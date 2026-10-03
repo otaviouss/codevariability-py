@@ -319,7 +319,7 @@ def test_provenance(tmp_path, mapping):
     assert result.metadata["runtime_versions"]["numpy"]
     assert (
         result.metadata["metric_normalizations"]["ast_tree_edit_similarity"]
-        == "python_normalized_ast_tree_v2"
+        == "python_normalized_ast_tree_v3"
     )
     assert len(result.metadata["input_sha256"]) == 4
     result.export(tmp_path / "out")

@@ -18,10 +18,7 @@ CODE_TOKENIZATION = "pygments_lexemes_with_generic_fallback_v2"
 _WORD = re.compile(r"(?u)\b\w+\b")
 _GENERIC_CODE_TOKEN = re.compile(
     r"""(?x)
-    (?:"(?:\\.|[^"\\])*")
-    |(?:'(?:\\.|[^'\\])*')
-    |(?:`(?:\\.|[^`\\])*`)
-    |(?:0[xX][0-9a-fA-F]+|0[bB][01]+|0[oO][0-7]+|\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)
+    (?:0[xX][0-9a-fA-F]+|0[bB][01]+|0[oO][0-7]+|\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)
     |(?:[^\W\d]\w*)
     |(?:===|!==|>>>|<<=|>>=|\*\*=|//=|\?\?=|\*\*|//|==|!=|<=|>=|&&|\|\||\?\?|\?\.|=>|->|::|\.\.\.|\+\+|--|\+=|-=|\*=|/=|%=|&=|\|=|\^=|:=|<<|>>)
     |(?:[^\s\w])
@@ -131,7 +128,7 @@ def fenced_code_segments(text: str) -> tuple[CodeSegment, ...]:
         if marker == "`" and "`" in info:
             continue
         delimiter, width = marker, count
-        language = (info.split(maxsplit=1) or [None])[0]
+        language = info.split(maxsplit=1)[0] if info else None
         start_line = number + 1
     if delimiter is not None:
         raise AnalysisError(f"Fence Markdown sem fechamento (linha {start_line - 1}).")
@@ -154,7 +151,41 @@ def _lexer(filename: str, language: str | None):
 
 
 def _generic_tokens(code: str) -> list[str]:
-    return [match.group(0) for match in _GENERIC_CODE_TOKEN.finditer(code)]
+    # Resolve closing quotes once, backwards. Repeated failed searches from
+    # escaped quotes in an unterminated string must not rescan every suffix.
+    # next_end[q] is the first legal closing q from the next character;
+    # after_next[q] handles the two-character escape branch of the old grammar.
+    quotes = ('"', "'", '`')
+    next_end = [-1, -1, -1]
+    after_next = next_end
+    endings: dict[int, int] = {}
+    for index in range(len(code) - 1, -1, -1):
+        character = code[index]
+        current = []
+        for position, quote in enumerate(quotes):
+            if character == quote:
+                endings[index] = next_end[position]
+                current.append(index)
+            elif character == "\\":
+                current.append(after_next[position] if index + 1 < len(code) and code[index + 1] != "\n" else -1)
+            else:
+                current.append(next_end[position])
+        after_next, next_end = next_end, current
+    tokens = []
+    index = 0
+    while index < len(code):
+        end = endings.get(index, -1)
+        if end >= 0:
+            tokens.append(code[index:end + 1])
+            index = end + 1
+        else:
+            match = _GENERIC_CODE_TOKEN.match(code, index)
+            if match is None:
+                index += 1
+            else:
+                tokens.append(match.group(0))
+                index = match.end()
+    return tokens
 
 
 def _pygments_tokens(code: str, lexer) -> list[str]:

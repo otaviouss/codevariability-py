@@ -120,8 +120,9 @@ class CodeDataset:
         if isinstance(extensions, str):
             extensions = [extensions]
         try:
-            allowed = None if extensions is None else set()
+            allowed: set[str] | None = None
             if extensions is not None:
+                allowed = set()
                 for extension in extensions:
                     if not isinstance(extension, str) or not extension.strip():
                         raise AnalysisError("Extensões devem ser strings não vazias.")
@@ -210,7 +211,7 @@ class CodeDataset:
             matrices[metric] = matrix
         normalizations = {
             metric: (
-                "python_normalized_ast_tree_v2" if metric == "ast_tree_edit_similarity"
+                "python_normalized_ast_tree_v3" if metric == "ast_tree_edit_similarity"
                 else TEXT_NORMALIZATION if metric in {"cosine", "jaccard"}
                 else CODE_TOKENIZATION
             )
@@ -415,7 +416,10 @@ class AnalysisResult:
             ("metric_normalizations", "normalization"),
             ("metric_dimensions", "dimension"),
         ):
-            values = dict(metadata.get(metadata_field, {}))
+            existing = metadata.get(metadata_field, {})
+            if not isinstance(existing, Mapping):
+                raise AnalysisError(f"metadata.{metadata_field} deve ser um mapeamento.")
+            values = dict(existing)
             value = matrix.attrs.get(attribute)
             if value is not None:
                 if not isinstance(value, str) or not value.strip():
@@ -424,7 +428,10 @@ class AnalysisResult:
             metadata[metadata_field] = values
         adapter_metadata = matrix.attrs.get("adapter_metadata")
         if isinstance(adapter_metadata, dict):
-            adapters = dict(metadata.get("external_adapters", {}))
+            existing_adapters = metadata.get("external_adapters", {})
+            if not isinstance(existing_adapters, Mapping):
+                raise AnalysisError("metadata.external_adapters deve ser um mapeamento.")
+            adapters = dict(existing_adapters)
             adapters[metric] = adapter_metadata
             metadata["external_adapters"] = adapters
         dimensions = metadata.get("metric_dimensions", {})
@@ -432,8 +439,10 @@ class AnalysisResult:
             [*self.metrics, metric], dimensions if isinstance(dimensions, Mapping) else {}
         )
         normalizations = metadata.get("metric_normalizations", {})
+        if not isinstance(normalizations, Mapping):
+            raise AnalysisError("metadata.metric_normalizations deve ser um mapeamento.")
         unique = set(normalizations.values())
-        metadata["normalization"] = next(iter(unique)) if len(unique) == 1 and len(normalizations) == len(metadata["metrics"]) else "per_metric"
+        metadata["normalization"] = next(iter(unique)) if len(unique) == 1 and len(normalizations) == len(self.metrics) + 1 else "per_metric"
         return AnalysisResult(matrices={**self.matrices, metric: aligned}, files=list(self.files), metadata=metadata)
 
     def export(self, directory: str | Path, formats: str | Sequence[str] = ("json", "csv")) -> None:

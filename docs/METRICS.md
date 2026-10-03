@@ -51,6 +51,18 @@ standard deviation of a file's off-diagonal values in the equally weighted
 dimension-average matrix; it is 0 when fewer than two values exist.
 
 Internal IDs and normalization versions are recorded in metadata. Python AST
-uses `ast_tree_edit_similarity_v2` and `python_normalized_ast_tree_v2`.
+uses `ast_tree_edit_similarity_v2` and `python_normalized_ast_tree_v3`.
 Compare results only when metric IDs, normalization, runtime/parser versions,
 and selected dimensions are compatible.
+
+The generic fallback scans quoted tokens in linear time with linear auxiliary
+storage; token output semantics and `pygments_lexemes_with_generic_fallback_v2`
+remain unchanged.
+
+The unreleased 0.2.0 candidate advances Python AST normalization to v3 so that
+empty/comment-only source and empty Python fences follow the documented scores:
+empty/empty is 1 and empty/nonempty is 0. Nonempty trees and the TED formula
+remain unchanged. The normalization helper retains its synthetic container;
+the public metric treats a container without fragments as an empty tree.
+This improvement does not make LCS, exact TED, permutation tests, or complete
+pairwise matrices linear. Callers must still budget total work and input sizes.

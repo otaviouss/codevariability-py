@@ -63,6 +63,14 @@ The mapping result exposes `global_test`, `pairwise`, `within_groups`,
 `between_groups`, `overview`, `pairwise_overview`, and `interpretation`.
 Both support `print_report()`, `export(directory)`, and `to_excel(path)`.
 
+Group names must be distinct, nonempty strings. They are labels, not statistic
+keys. For two groups, `within_group_columns` returns the two summary columns
+in group order and is also recorded in metadata. Usually these are
+`within_<name>`. If a label would collide with a statistic or another label,
+`__group` is appended until the column is unique. Thus a group named
+`difference` remains valid without replacing the `within_difference` contrast.
+Use this property when reading arbitrary user-supplied group names.
+
 Tests permute file-level group labels with fixed group sizes and use the
 Monte Carlo correction `(extremes + 1)/(permutations + 1)`. Two-group
 homogeneity and separation tests are two-sided. Global multigroup homogeneity
@@ -79,6 +87,11 @@ Python AST analysis is not already present. The installed `codevariability-js`
 command must be on PATH. No sibling directory or another checkout is searched.
 `ast_timeout` must be a positive finite number of seconds; timeout or adapter
 failure raises `AnalysisError`. `cache_dir` is passed to the optional adapter.
+
+Keep inputs unchanged throughout group analysis, including progress callbacks.
+The optional adapter's raw input hashes must match those used by the base
+analysis; a changed snapshot raises `AnalysisError` rather than combining
+results from different file contents.
 
 `load_matrix_json(path)` returns `(metric_name, pandas.DataFrame)` for the
 single-metric schema in [FORMATS.md](FORMATS.md). Attach it with `with_metric()`.
