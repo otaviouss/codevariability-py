@@ -1,0 +1,10 @@
+include LICENSE README.md CHANGELOG.md CONTRIBUTING.md PUBLICATION_CHECKLIST.md
+recursive-include src *.py
+recursive-include tests *.py
+recursive-include examples *.py
+recursive-include docs *.md
+global-exclude *.py[cod]
+global-exclude .DS_Store
+prune .github
+prune build
+prune dist
