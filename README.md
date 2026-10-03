@@ -5,19 +5,18 @@ matrices, descriptive statistics, representative rankings, and comparisons
 between independent groups. It helps you identify common structures and
 unusual variants in a collection without executing the submitted code.
 
-Version **0.2.0** is being prepared for the first release of this independent
-repository. The API is alpha. The distribution name is `codevariability-py`;
+Version **0.2.0** is the first release of this independent repository. The API is alpha. The distribution name is `codevariability-py`;
 the import name and command are `codevariability`.
 
 ## Installation
 
-Python 3.10 or later is required. Install a checkout of this repository:
+Python 3.10 or later is required. Install from PyPI:
 
 ```bash
-python -m pip install .
+python -m pip install codevariability-py==0.2.0
 ```
 
-After the first PyPI release, install with `python -m pip install codevariability-py`. Do not install the historical `codevariability`
+For development, install a checkout with `python -m pip install .`. Do not install the historical `codevariability`
 distribution in the same environment: both distributions provide the same
 Python import and command. Use a new virtual environment when migrating.
 
@@ -118,9 +117,9 @@ See [CONTRIBUTING.md](https://github.com/otaviouss/codevariability-py/blob/main/
 [PUBLICATION_CHECKLIST.md](https://github.com/otaviouss/codevariability-py/blob/main/PUBLICATION_CHECKLIST.md) for release preparation.
 The project uses the [MIT license](https://github.com/otaviouss/codevariability-py/blob/main/LICENSE), copyright 2026 Otávio Gomes.
 
-## Candidate compatibility
+## Compatibility
 
-Version 0.2.0 is still unreleased. Arbitrary distinct nonempty group names are
+Arbitrary distinct nonempty group names are
 accepted; use `result.within_group_columns` to locate collision-safe within-group
 means. Keep files unchanged while an analysis runs; optional JavaScript results
 with different input hashes raise `AnalysisError`.

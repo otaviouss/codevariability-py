@@ -21,17 +21,23 @@ there is no new published release history implied by that baseline.
    the bundled examples. Also confirm that the sdist builds independently.
 6. Recheck package-name ownership, version availability, dependency
    vulnerabilities, secrets, metadata, and links immediately before upload.
-7. Configure PyPI/TestPyPI credentials locally or a project-specific trusted
-   publisher. Never store credentials in this repository. Manual test upload
-   uses `python -m twine upload --repository testpypi dist/*`. After checking
-   that installation, the separate production action is `python -m twine
-   upload dist/*`.
+7. Configure a PyPI trusted publisher with owner `otaviouss`, repository
+   `codevariability-py`, workflow filename `release.yml`, and environment
+   `pypi`. For a first release, create a pending publisher for project
+   `codevariability-py`. Never store registry credentials in this repository.
+8. Dispatch `.github/workflows/release.yml` from `main` with `publish=false`
+   to validate and build only. With `publish=true`, the separate publishing
+   job exchanges its GitHub OIDC identity and uploads the validated artifacts
+   to production PyPI. Only that job has `id-token: write`.
+9. Verify registry hashes and a fresh installation, then create the matching
+   GitHub release. Keep publication evidence separate from earlier audits.
 
 TestPyPI has a separate account and publisher configuration. When validating
 its package, install dependencies from production PyPI first, then install
 `codevariability-py==0.2.0` with `--no-deps --index-url
 https://test.pypi.org/simple/`. This avoids mixing dependency resolution across
-the two indexes. Publication is a maintainer action; CI performs checks only.
+the two indexes. Ordinary CI performs checks only; the manually dispatched
+release workflow can publish to production PyPI.
 
 The Python and JavaScript projects have separate release schedules. Changing
 one project's release version need not change the other, but interchange

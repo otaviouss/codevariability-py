@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 — unreleased
+## 0.2.0 — 2026-10-03
 
 - Correct empty Python AST input scores, including comment-only source and
   empty Python Markdown fences. Advance Python AST normalization to v3 while
@@ -23,5 +23,5 @@
 - Resolve the optional JavaScript adapter only through its installed command;
   remove discovery of files outside the Python project.
 - Document installation, outputs, resource limits, and migration from the
-  historical distribution. This entry records preparation, not a published
-  PyPI release.
+  historical distribution. This is the first release from the independent
+  repository.
