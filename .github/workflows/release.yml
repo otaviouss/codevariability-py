@@ -36,6 +36,15 @@ jobs:
       - run: python -m pip_audit .
       - run: python -m build
       - run: python -m twine check --strict dist/*
+      - name: Verify installed distribution identity and CLI
+        run: |
+          python -m venv "$RUNNER_TEMP/release-consumer"
+          "$RUNNER_TEMP/release-consumer/bin/python" -m pip install --upgrade pip 'setuptools>=83.0.0'
+          "$RUNNER_TEMP/release-consumer/bin/python" -m pip install dist/*.whl
+          "$RUNNER_TEMP/release-consumer/bin/python" -m pip check
+          "$RUNNER_TEMP/release-consumer/bin/python" -c "from importlib.metadata import version; assert version('codevariability') == '0.2.0'"
+          "$RUNNER_TEMP/release-consumer/bin/codevariability" --version
+          "$RUNNER_TEMP/release-consumer/bin/python" examples/basic.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: python-distributions
@@ -49,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/project/codevariability-py/
+      url: https://pypi.org/project/codevariability/
     permissions:
       contents: read
       id-token: write

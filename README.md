@@ -5,7 +5,7 @@ matrices, descriptive statistics, representative rankings, and comparisons
 between independent groups. It helps you identify common structures and
 unusual variants in a collection without executing the submitted code.
 
-Version **0.2.0** is the first release of this independent repository. The API is alpha. The distribution name is `codevariability-py`;
+Version **0.2.0** is the first release of this independent repository. The API is alpha. The distribution name is `codevariability`;
 the import name and command are `codevariability`.
 
 ## Installation
@@ -13,12 +13,13 @@ the import name and command are `codevariability`.
 Python 3.10 or later is required. Install from PyPI:
 
 ```bash
-python -m pip install codevariability-py==0.2.0
+python -m pip install codevariability==0.2.0
 ```
 
-For development, install a checkout with `python -m pip install .`. Do not install the historical `codevariability`
-distribution in the same environment: both distributions provide the same
-Python import and command. Use a new virtual environment when migrating.
+For development, install a checkout with `python -m pip install .`.
+The historical 0.1.2 code is the implementation baseline; 0.2.0 is the first
+public PyPI release. Use a new virtual environment when migrating from a
+local historical installation.
 
 ## Quick start
 

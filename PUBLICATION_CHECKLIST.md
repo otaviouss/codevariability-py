@@ -1,6 +1,6 @@
 # Python publication checklist
 
-Prepared version: **0.2.0**. Distribution: **codevariability-py**.
+Prepared version: **0.2.0**. Distribution: **codevariability**.
 Import/CLI: **codevariability**. A checked item records an executed check;
 unchecked items are required before the first public release.
 
@@ -20,10 +20,10 @@ unchecked items are required before the first public release.
 - [x] No research inputs, manuscript files, caches, or generated results included.
 - [x] New repository URLs verified with authenticated access.
 - [x] PyPI project-name existence checked; recheck ownership/version before upload.
-- [ ] Make the GitHub repository public and verify links without authentication.
+- [x] Make the GitHub repository public and verify links without authentication.
 - [ ] Configure registry authentication or a trusted publisher for this new project.
 - [ ] Choose the release date, publish, and verify installation from the registry.
 
-Do not install this distribution alongside the historical `codevariability`
-distribution, which provides the same import and command. See
+The historical local implementation is the baseline; this distribution is
+the first public PyPI release. See
 [docs/RELEASING.md](docs/RELEASING.md).

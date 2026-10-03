@@ -1,8 +1,8 @@
 # Releasing the Python package
 
-The repository is initially private. Before a public release, make it public
-and confirm that the metadata URLs and issue tracker are reachable by users.
-The target distribution is `codevariability-py`; its import remains
+The repository is public. Confirm that the metadata URLs and issue tracker
+remain reachable by users before each release.
+The target distribution is `codevariability`; its import remains
 `codevariability`. Version 0.2.0 is prepared and has not been published from
 this repository. The historical 0.1.2 source is its implementation baseline;
 there is no new published release history implied by that baseline.
@@ -24,7 +24,7 @@ there is no new published release history implied by that baseline.
 7. Configure a PyPI trusted publisher with owner `otaviouss`, repository
    `codevariability-py`, workflow filename `release.yml`, and environment
    `pypi`. For a first release, create a pending publisher for project
-   `codevariability-py`. Never store registry credentials in this repository.
+   `codevariability`. Never store registry credentials in this repository.
 8. Dispatch `.github/workflows/release.yml` from `main` with `publish=false`
    to validate and build only. With `publish=true`, the separate publishing
    job exchanges its GitHub OIDC identity and uploads the validated artifacts
@@ -34,7 +34,7 @@ there is no new published release history implied by that baseline.
 
 TestPyPI has a separate account and publisher configuration. When validating
 its package, install dependencies from production PyPI first, then install
-`codevariability-py==0.2.0` with `--no-deps --index-url
+`codevariability==0.2.0` with `--no-deps --index-url
 https://test.pypi.org/simple/`. This avoids mixing dependency resolution across
 the two indexes. Ordinary CI performs checks only; the manually dispatched
 release workflow can publish to production PyPI.

@@ -59,7 +59,7 @@ The generic fallback scans quoted tokens in linear time with linear auxiliary
 storage; token output semantics and `pygments_lexemes_with_generic_fallback_v2`
 remain unchanged.
 
-The unreleased 0.2.0 candidate advances Python AST normalization to v3 so that
+Version 0.2.0 advances Python AST normalization to v3 so that
 empty/comment-only source and empty Python fences follow the documented scores:
 empty/empty is 1 and empty/nonempty is 0. Nonempty trees and the TED formula
 remain unchanged. The normalization helper retains its synthetic container;
