@@ -3,8 +3,8 @@
 The repository is public. Confirm that the metadata URLs and issue tracker
 remain reachable by users before each release.
 The target distribution is `codevariability`; its import remains
-`codevariability`. Version 0.2.0 is prepared and has not been published from
-this repository. The historical 0.1.2 source is its implementation baseline;
+`codevariability`. Version 0.2.0 was first published on 2026-10-03 from
+this repository through PyPI Trusted Publishing. The historical 0.1.2 source is its implementation baseline;
 there is no new published release history implied by that baseline.
 
 1. Update `src/codevariability/__init__.py`; setuptools reads that version

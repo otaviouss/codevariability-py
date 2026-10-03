@@ -42,7 +42,7 @@ jobs:
           "$RUNNER_TEMP/release-consumer/bin/python" -m pip install --upgrade pip 'setuptools>=83.0.0'
           "$RUNNER_TEMP/release-consumer/bin/python" -m pip install dist/*.whl
           "$RUNNER_TEMP/release-consumer/bin/python" -m pip check
-          "$RUNNER_TEMP/release-consumer/bin/python" -c "from importlib.metadata import version; assert version('codevariability') == '0.2.0'"
+          "$RUNNER_TEMP/release-consumer/bin/python" -c "import codevariability; from importlib.metadata import version; assert version('codevariability') == codevariability.__version__"
           "$RUNNER_TEMP/release-consumer/bin/codevariability" --version
           "$RUNNER_TEMP/release-consumer/bin/python" examples/basic.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
